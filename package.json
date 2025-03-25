@@ -1,0 +1,11 @@
+{
+  "name": "unionlabs-session-manager",
+  "version": "1.0.0",
+  "description": "UnionLabs Testbed Session Manager",
+  "main": "src/index.js",
+  "author": "Ashith Ennegadde Nithyananda",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  }
+}
