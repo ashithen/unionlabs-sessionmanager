@@ -6,6 +6,7 @@
   "author": "Ashith Ennegadde Nithyananda",
   "license": "MIT",
   "dependencies": {
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "winston": "^3.14.2"
   }
 }
