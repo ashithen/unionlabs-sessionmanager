@@ -1,12 +1,16 @@
-const express = require('express');
-const healthRoutes = require('./routes/health');
-const sessionRoutes = require('./routes/sessions');
-const testbedRoutes = require('./routes/testbeds');
+'use strict';
 
-module.exports = (deps) => {
-  const router = express.Router();
-  router.use('/health', healthRoutes(deps));
-  router.use('/sessions', sessionRoutes(deps));
-  router.use('/testbeds', testbedRoutes(deps));
+const { Router } = require('express');
+const createSessionsRouter = require('./routes/sessions');
+const createTestbedsRouter = require('./routes/testbeds');
+const createHealthRouter = require('./routes/health');
+
+module.exports = ({ sessionManager, Testbed, dockerService, Session }) => {
+  const router = Router();
+
+  router.use('/sessions', createSessionsRouter(sessionManager));
+  router.use('/testbeds', createTestbedsRouter(Testbed));
+  router.use('/health', createHealthRouter(dockerService, Session));
+
   return router;
 };
