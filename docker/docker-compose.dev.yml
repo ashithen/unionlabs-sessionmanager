@@ -1,0 +1,63 @@
+version: "3.8"
+
+services:
+  portal:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: unionlabs-portal
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../src:/app/src:ro
+      - ../package.json:/app/package.json:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portal-data:/app/data
+    env_file:
+      - ../.env
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - LOG_LEVEL=debug
+      - DB_PATH=/app/data/sessions.db
+      - DOCKER_SOCKET=/var/run/docker.sock
+    depends_on:
+      session-container:
+        condition: service_healthy
+    networks:
+      - unionlabs-dev
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  session-container:
+    build:
+      context: .
+      dockerfile: Dockerfile.session
+    container_name: unionlabs-session-dev
+    ports:
+      - "5901:5901"
+    environment:
+      - VNC_PW=unionlabs
+      - VNC_RESOLUTION=1280x1024x24
+    networks:
+      - unionlabs-dev
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "netstat -tlnp | grep -q ':5901' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  portal-data:
+    driver: local
+
+networks:
+  unionlabs-dev:
+    driver: bridge

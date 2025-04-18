@@ -1,0 +1,130 @@
+FROM ubuntu:22.04
+
+LABEL maintainer="UnionLabs <unionlabs@buffalo.edu>"
+LABEL description="UnionLabs Testbed Session Container with VNC access"
+LABEL version="1.0.0"
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV VNC_PW=unionlabs
+ENV VNC_DISPLAY=:1
+ENV VNC_RESOLUTION=1280x1024x24
+ENV HOME=/home/labuser
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    xvfb \
+    tightvncserver \
+    fluxbox \
+    xterm \
+    net-tools \
+    curl \
+    wget \
+    python3 \
+    python3-pip \
+    supervisor \
+    dbus-x11 \
+    xfonts-base \
+    xfonts-75dpi \
+    xfonts-100dpi \
+    procps \
+    nano \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -m -s /bin/bash -G sudo labuser \
+    && echo "labuser:labuser" | chpasswd
+
+RUN mkdir -p /var/log/supervisor \
+    && mkdir -p /home/labuser/.vnc \
+    && mkdir -p /home/labuser/.fluxbox \
+    && mkdir -p /etc/supervisor/conf.d
+
+RUN cat > /etc/supervisor/conf.d/session.conf <<'EOF'
+[supervisord]
+nodaemon=true
+logfile=/var/log/supervisor/supervisord.log
+pidfile=/var/run/supervisord.pid
+childlogdir=/var/log/supervisor
+user=root
+
+[program:xvfb]
+command=/usr/bin/Xvfb %(ENV_VNC_DISPLAY)s -screen 0 %(ENV_VNC_RESOLUTION)s -ac +extension GLX +render -noreset
+user=labuser
+autostart=true
+autorestart=true
+priority=100
+stdout_logfile=/var/log/supervisor/xvfb.stdout.log
+stderr_logfile=/var/log/supervisor/xvfb.stderr.log
+
+[program:fluxbox]
+command=/usr/bin/fluxbox
+user=labuser
+environment=DISPLAY="%(ENV_VNC_DISPLAY)s",HOME="/home/labuser"
+autostart=true
+autorestart=true
+priority=200
+startsecs=3
+startretries=5
+stdout_logfile=/var/log/supervisor/fluxbox.stdout.log
+stderr_logfile=/var/log/supervisor/fluxbox.stderr.log
+
+[program:vnc]
+command=/usr/bin/Xtightvnc %(ENV_VNC_DISPLAY)s -geometry %(ENV_VNC_RESOLUTION)s -depth 24 -rfbport 5901 -rfbauth /home/labuser/.vnc/passwd -desktop "UnionLabs Session" -alwaysshared
+user=labuser
+environment=DISPLAY="%(ENV_VNC_DISPLAY)s",HOME="/home/labuser"
+autostart=true
+autorestart=true
+priority=300
+startsecs=3
+startretries=5
+stdout_logfile=/var/log/supervisor/vnc.stdout.log
+stderr_logfile=/var/log/supervisor/vnc.stderr.log
+
+[program:xterm]
+command=/usr/bin/xterm -geometry 100x40+50+50
+user=labuser
+environment=DISPLAY="%(ENV_VNC_DISPLAY)s",HOME="/home/labuser"
+autostart=true
+autorestart=true
+priority=400
+startsecs=5
+stdout_logfile=/var/log/supervisor/xterm.stdout.log
+stderr_logfile=/var/log/supervisor/xterm.stderr.log
+EOF
+
+RUN cat > /home/labuser/start-vnc.sh <<'SCRIPT'
+#!/bin/bash
+set -e
+
+mkdir -p /home/labuser/.vnc
+echo "${VNC_PW:-unionlabs}" | vncpasswd -f > /home/labuser/.vnc/passwd
+chmod 600 /home/labuser/.vnc/passwd
+
+mkdir -p /home/labuser/.fluxbox
+cat > /home/labuser/.fluxbox/menu <<MENU
+[begin] (UnionLabs Session)
+  [exec] (Terminal) {xterm}
+  [exec] (File Manager) {xterm -e mc}
+  [submenu] (Tools)
+    [exec] (Top) {xterm -e top}
+    [exec] (Network Info) {xterm -e "ifconfig; read -p 'Press Enter...'"}
+  [end]
+  [separator]
+  [restart] (Restart Fluxbox)
+  [exit] (Exit)
+[end]
+MENU
+
+chown -R labuser:labuser /home/labuser
+
+exec /usr/bin/supervisord -c /etc/supervisor/conf.d/session.conf
+SCRIPT
+
+RUN chmod +x /home/labuser/start-vnc.sh \
+    && chown -R labuser:labuser /home/labuser
+
+EXPOSE 5901
+
+HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
+    CMD netstat -tlnp | grep -q ':5901' || exit 1
+
+CMD ["/home/labuser/start-vnc.sh"]
