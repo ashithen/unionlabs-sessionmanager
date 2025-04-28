@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="UnionLabs Testbed Session Manager — manage remote access to experimental wireless networking testbeds including NeXT, UWCT, UGCT, MilliNet, O-RAN, and IoT platforms.">
+  <meta name="keywords" content="UnionLabs, testbed, session manager, wireless, networking, 5G, IoT, mmWave, O-RAN">
+  <meta name="author" content="UnionLabs">
+  <meta name="theme-color" content="#0a0e1a">
+  <title>UnionLabs — Testbed Session Manager</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+  <!-- ═══════════════════════ HEADER ═══════════════════════ -->
+  <header id="app-header">
+    <div class="header-inner">
+      <div class="header-brand">
+        <h1 class="logo-text">
+          <span class="logo-union">Union</span><span class="logo-labs">Labs</span>
+        </h1>
+        <span class="header-divider"></span>
+        <span class="header-subtitle">Session Manager</span>
+      </div>
+      <div class="header-status" id="header-status">
+        <span class="status-dot disconnected" id="status-dot"></span>
+        <span class="status-label" id="status-label">Disconnected</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════ NAV TABS ═══════════════════════ -->
+  <nav id="app-nav">
+    <div class="nav-inner">
+      <button class="nav-tab active" data-tab="dashboard" id="tab-btn-dashboard">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-tab" data-tab="testbeds" id="tab-btn-testbeds">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        Testbeds
+      </button>
+      <button class="nav-tab" data-tab="sessions" id="tab-btn-sessions">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="10"/></svg>
+        Sessions
+      </button>
+      <button class="nav-tab" data-tab="new-session" id="tab-btn-new-session">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        New Session
+      </button>
+      <span class="nav-indicator" id="nav-indicator"></span>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════ MAIN CONTENT ═══════════════════════ -->
+  <main id="app-main">
+
+    <!-- ──────── DASHBOARD TAB ──────── -->
+    <section class="tab-content active" id="tab-dashboard">
+      <div class="section-header">
+        <h2>Dashboard Overview</h2>
+        <span class="refresh-hint" id="dashboard-refresh-hint">Auto-refreshes every 30s</span>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="stats-grid" id="stats-grid">
+        <article class="stat-card stat-active" id="stat-active-sessions">
+          <div class="stat-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          </div>
+          <div class="stat-body">
+            <span class="stat-value" id="stat-val-active" data-target="0">0</span>
+            <span class="stat-label">Active Sessions</span>
+          </div>
+        </article>
+        <article class="stat-card stat-testbeds" id="stat-available-testbeds">
+          <div class="stat-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a4 4 0 00-8 0v2"/></svg>
+          </div>
+          <div class="stat-body">
+            <span class="stat-value" id="stat-val-testbeds" data-target="0">0</span>
+            <span class="stat-label">Available Testbeds</span>
+          </div>
+        </article>
+        <article class="stat-card stat-total" id="stat-total-sessions">
+          <div class="stat-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <div class="stat-body">
+            <span class="stat-value" id="stat-val-total" data-target="0">0</span>
+            <span class="stat-label">Total Sessions</span>
+          </div>
+        </article>
+        <article class="stat-card stat-health" id="stat-system-health">
+          <div class="stat-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          </div>
+          <div class="stat-body">
+            <span class="stat-value stat-health-text" id="stat-val-health">—</span>
+            <span class="stat-label">System Health</span>
+          </div>
+        </article>
+      </div>
+
+      <!-- Recent Sessions -->
+      <div class="card" id="recent-sessions-card">
+        <div class="card-header">
+          <h3>Recent Sessions</h3>
+          <button class="btn btn-ghost btn-sm" id="btn-view-all-sessions">View All →</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="recent-sessions-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Testbed</th>
+                <th>User</th>
+                <th>Status</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody id="recent-sessions-tbody">
+              <tr class="skeleton-row"><td colspan="5"><div class="skeleton-line"></div></td></tr>
+              <tr class="skeleton-row"><td colspan="5"><div class="skeleton-line"></div></td></tr>
+              <tr class="skeleton-row"><td colspan="5"><div class="skeleton-line"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="empty-state" id="recent-sessions-empty" style="display:none;">No sessions yet. Create your first session to get started.</p>
+      </div>
+    </section>
+
+    <!-- ──────── TESTBEDS TAB ──────── -->
+    <section class="tab-content" id="tab-testbeds">
+      <div class="section-header">
+        <h2>Testbed Catalog</h2>
+        <span class="badge badge-info" id="testbed-count-badge">0 testbeds</span>
+      </div>
+      <div class="testbed-grid" id="testbed-grid">
+        <!-- Skeleton cards -->
+        <div class="testbed-card skeleton-card"><div class="skeleton-block"></div></div>
+        <div class="testbed-card skeleton-card"><div class="skeleton-block"></div></div>
+        <div class="testbed-card skeleton-card"><div class="skeleton-block"></div></div>
+      </div>
+    </section>
+
+    <!-- ──────── SESSIONS TAB ──────── -->
+    <section class="tab-content" id="tab-sessions">
+      <div class="section-header">
+        <h2>Session Management</h2>
+        <button class="btn btn-primary btn-sm" id="btn-new-session-shortcut">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          New Session
+        </button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="data-table" id="sessions-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Testbed</th>
+                <th>User</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Duration</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="sessions-tbody">
+              <tr class="skeleton-row"><td colspan="7"><div class="skeleton-line"></div></td></tr>
+              <tr class="skeleton-row"><td colspan="7"><div class="skeleton-line"></div></td></tr>
+              <tr class="skeleton-row"><td colspan="7"><div class="skeleton-line"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="empty-state" id="sessions-empty" style="display:none;">No sessions found.</p>
+      </div>
+    </section>
+
+    <!-- ──────── NEW SESSION TAB ──────── -->
+    <section class="tab-content" id="tab-new-session">
+      <div class="section-header">
+        <h2>Create New Session</h2>
+      </div>
+      <div class="card form-card">
+        <form id="new-session-form" autocomplete="off">
+          <div class="form-grid">
+            <!-- Testbed select -->
+            <div class="form-group" id="form-group-testbed">
+              <label for="input-testbed">Testbed</label>
+              <div class="select-wrap">
+                <select id="input-testbed" required>
+                  <option value="" disabled selected>Select a testbed…</option>
+                </select>
+              </div>
+              <span class="form-hint">Choose the testbed environment for your session.</span>
+            </div>
+
+            <!-- User ID -->
+            <div class="form-group" id="form-group-user">
+              <label for="input-user-id">User ID</label>
+              <input type="text" id="input-user-id" placeholder="e.g. researcher-01" required minlength="2" maxlength="64">
+              <span class="form-hint">Your unique researcher identifier.</span>
+            </div>
+
+            <!-- Duration -->
+            <div class="form-group form-group-full" id="form-group-duration">
+              <label for="input-duration">
+                Duration: <strong id="duration-display">60 min</strong>
+              </label>
+              <input type="range" id="input-duration" min="15" max="480" step="15" value="60">
+              <div class="range-labels">
+                <span>15 min</span>
+                <span>480 min</span>
+              </div>
+            </div>
+
+            <!-- Start time -->
+            <div class="form-group" id="form-group-start">
+              <label for="input-start-time">Start Time</label>
+              <div class="radio-group">
+                <label class="radio-label">
+                  <input type="radio" name="start-type" value="now" id="radio-start-now" checked>
+                  <span class="radio-custom"></span>
+                  Start immediately
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="start-type" value="scheduled" id="radio-start-scheduled">
+                  <span class="radio-custom"></span>
+                  Schedule for later
+                </label>
+              </div>
+              <input type="datetime-local" id="input-scheduled-time" class="hidden" min="">
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="reset" class="btn btn-ghost" id="btn-reset-form">Reset</button>
+            <button type="submit" class="btn btn-primary btn-lg" id="btn-submit-session">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
+              Launch Session
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <!-- ═══════════════════════ noVNC MODAL ═══════════════════════ -->
+  <div class="modal-overlay" id="vnc-modal" aria-hidden="true">
+    <div class="modal-content modal-fullscreen" id="vnc-modal-content">
+      <div class="modal-topbar" id="vnc-modal-topbar">
+        <div class="modal-session-info">
+          <span class="modal-badge" id="vnc-modal-testbed">—</span>
+          <span class="modal-session-id" id="vnc-modal-session-id">—</span>
+        </div>
+        <button class="btn btn-ghost btn-icon-only modal-close-btn" id="vnc-modal-close" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <iframe id="vnc-iframe" src="about:blank" allowfullscreen></iframe>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ TOAST CONTAINER ═══════════════════════ -->
+  <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+  <!-- ═══════════════════════ SCRIPTS ═══════════════════════ -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-ERE2TIixSOy6KnTuap0vqQ7mLqKxfOS6Y1ms7yxJLXutQVpc7sfOdZ/0sZxI3GOk" crossorigin="anonymous"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
