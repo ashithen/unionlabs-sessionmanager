@@ -1,1 +1,37 @@
+# Dependencies
 node_modules/
+
+# Environment
+.env
+
+# Database
+data/*.db
+data/*.db-journal
+data/*.db-shm
+data/*.db-wal
+
+# Logs
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker/tmp/
+
+# Test coverage
+coverage/
+
+# VNC tokens (runtime)
+tokens/
+!tokens/.gitkeep
+
+# Build artifacts
+dist/
